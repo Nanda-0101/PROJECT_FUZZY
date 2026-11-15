@@ -94,4 +94,4 @@ if not need_result():
     st.subheader("Prediksi siswa baru")
     alert("info", "Untuk menentukan cluster siswa baru (satu siswa atau banyak siswa via CSV), buka halaman <b>Prediksi Siswa Baru</b>.", 62)
     if st.button("Buka Prediksi Siswa Baru"):
-        st.switch_page("pages/6_Prediksi_Siswa_Baru.py")
+        st.switch_page("pages/Prediksi_Siswa_Baru.py")

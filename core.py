@@ -1,10 +1,9 @@
+"""Logika komputasi Fuzzy C-Means + PCA (tanpa dependensi Streamlit)."""
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.metrics import (silhouette_score, silhouette_samples,
-                             davies_bouldin_score, calinski_harabasz_score,
-                             adjusted_rand_score)
+from sklearn.metrics import silhouette_score, silhouette_samples
 
 FEATURES = ["age", "Medu", "Fedu", "traveltime", "studytime", "failures",
             "famrel", "freetime", "goout", "Dalc", "Walc", "health",
@@ -129,10 +128,6 @@ def partition_coefficient(U):
     return float((U ** 2).sum() / U.shape[0])
 
 
-def partition_entropy(U):
-    return float(-(U * np.log(np.clip(U, 1e-12, 1))).sum() / U.shape[0])
-
-
 def is_degenerate(U, tol=1e-3):
     return partition_coefficient(U) < 1.0 / U.shape[1] + tol
 
@@ -212,7 +207,7 @@ def name_clusters(df_feat, labels, k):
 
 # ----------------------------------------------------------------- pipeline
 def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
-                 k_min=2, k_max=8, k_mode="auto", k_manual=3, seed=42, n_stab=10):
+                 k_min=2, k_max=8, k_mode="auto", k_manual=3, seed=42):
     X_raw = df[FEATURES].astype(float)
     scaler = StandardScaler().fit(X_raw.values)
     X = scaler.transform(X_raw.values)
@@ -233,9 +228,7 @@ def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
         deg = is_degenerate(r["U"])
         rows.append({"k": k, "Silhouette": silhouette_score(X_pca, r["labels"]) if len(set(r["labels"])) > 1 else np.nan,
                      "Partition Coefficient": partition_coefficient(r["U"]),
-                     "Partition Entropy": partition_entropy(r["U"]),
-                     "Davies-Bouldin": davies_bouldin_score(X_pca, r["labels"]) if len(set(r["labels"])) > 1 else np.nan,
-                     "J": r["J"], "Degenerat": deg})
+                     "Degenerat": deg})
     k_table = pd.DataFrame(rows).set_index("k")
     k_auto = int(k_table["Silhouette"].idxmax())
     K = k_auto if k_mode == "auto" else int(k_manual)
@@ -255,25 +248,16 @@ def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
     # evaluasi
     uniq = len(set(labels)) > 1
     sil_p = silhouette_score(X_pca, labels) if uniq else np.nan
-    sil_o = silhouette_score(X, labels) if uniq else np.nan
     sil_samples = silhouette_samples(X_pca, labels) if uniq else np.zeros(len(labels))
+    # empat komponen evaluasi: (1) KMO & Bartlett sebelum ekstraksi, (2) explained variance sesudah ekstraksi,
+    # (3) Silhouette score, (4) Fuzzy Partition Coefficient
     metrics = {
         "Silhouette (ruang PCA)": sil_p,
-        "Silhouette (ruang fitur asli)": sil_o,
         "Partition Coefficient": partition_coefficient(U),
-        "Partition Entropy": partition_entropy(U),
-        "Davies-Bouldin": davies_bouldin_score(X_pca, labels) if uniq else np.nan,
-        "Calinski-Harabasz": calinski_harabasz_score(X_pca, labels) if uniq else np.nan,
         "Explained variance (komponen terpilih)": float(cum[n_comp - 1]),
         "Explained variance (PC1+PC2)": float(cum[1]),
-        "Fungsi objektif J": res["J"],
-        "Iterasi konvergen": res["n_iter"],
     }
-    # stabilitas: ARI antar seed berbeda
-    stab = []
-    for s in range(n_stab):
-        r2 = fcm(X_pca, K, m, max_iter, tol, max(1, n_init // 2), seed + 1000 + s)
-        stab.append(adjusted_rand_score(labels, r2["labels"]))
+    suit = pca_suitability(df)
 
     maxu = U.max(1)
     result_df = df[FEATURES].copy()
@@ -293,7 +277,7 @@ def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
         "k_table": k_table, "k_auto": k_auto, "K": K,
         "U": U, "centers": centers, "labels": labels, "hist": res["hist"],
         "cluster_info": info, "names": names, "metrics": metrics,
-        "sil_samples": sil_samples, "stab": np.array(stab), "result_df": result_df,
+        "sil_samples": sil_samples, "suit": suit, "n_iter": res["n_iter"], "J": res["J"], "result_df": result_df,
         "degenerate": is_degenerate(U),
         "profile": df[FEATURES].assign(Cluster=labels).groupby("Cluster").mean(),
     }

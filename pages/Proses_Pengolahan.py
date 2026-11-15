@@ -20,14 +20,14 @@ if not need_data():
             (3, "Pemilihan jumlah cluster (k)", "FCM dijalankan untuk tiap k pada ruang PCA; k terbaik = Silhouette tertinggi (atau ditentukan manual)."),
             (4, "FCM", "Iterasi update pusat cluster & derajat keanggotaan hingga perubahan maksimum < toleransi."),
             (5, "Penamaan cluster", "Cluster diurutkan berdasarkan rata-rata nilai, lalu dinamai dari profil fitur aslinya."),
-            (6, "Evaluasi", "Silhouette, Partition Coefficient, Partition Entropy, Davies-Bouldin, Calinski-Harabasz, explained variance, dan uji stabilitas.")]) +
+            (6, "Evaluasi", "KMO dan Bartlett (sebelum ekstraksi), explained variance (sesudah ekstraksi), Silhouette score, dan Fuzzy Partition Coefficient.")]) +
        "</div>", 330)
 
     st.subheader("Parameter")
     p = st.session_state.params
     c1, c2, c3, c4 = st.columns(4)
     m = c1.number_input("Fuzzifier (m)", 1.05, 3.0, float(p["m"]), 0.05,
-                        help="m>1. Nilai 2.0 pada data ini cenderung menghasilkan solusi degenerat (semua keanggotaan kira-kira 1/c).")
+                        help="m>1. Nilai 2.0 pada data ini cenderung menghasilkan solusi degenerat (semua keanggotaan mendekati 1/c).")
     max_iter = c2.number_input("Maks. iterasi", 50, 2000, int(p["max_iter"]), 50)
     tol = c3.selectbox("Toleransi konvergensi", [1e-3, 1e-4, 1e-5, 1e-6], index=[1e-3, 1e-4, 1e-5, 1e-6].index(p["tol"]) if p["tol"] in [1e-3, 1e-4, 1e-5, 1e-6] else 2, format_func=lambda v: f"{v:g}")
     n_init = c4.number_input("Jumlah inisialisasi acak", 1, 20, int(p["n_init"]))
@@ -52,7 +52,7 @@ if not need_data():
             alert("danger", "Solusi degenerat terdeteksi (PC = 1/c). Turunkan nilai fuzzifier m (mis. 1.5).", 70)
         stat_cards([("Komponen PCA", f"{r['n_comp']} / {len(FEATURES)}", "primary"),
                     ("Varians dipertahankan", f"{r['cum'][r['n_comp']-1]:.1%}", "success"),
-                    ("k dipakai", r["K"], "warning"), ("Iterasi konvergen", r["metrics"]["Iterasi konvergen"], "secondary")], 120)
+                    ("k dipakai", r["K"], "warning"), ("Iterasi konvergen", r["n_iter"], "secondary")], 120)
         st.subheader("Hasil antara")
         with st.expander("Tahap 1 - Standardisasi", expanded=False):
             a = st.session_state.df[FEATURES].head(8)
@@ -92,4 +92,4 @@ if not need_data():
             st.write("Pusat cluster (dikembalikan ke skala fitur asli)")
             st.dataframe(cdf.round(2), use_container_width=True)
         if st.button("Lihat Hasil Pengolahan"):
-            st.switch_page("pages/5_Hasil_Pengolahan.py")
+            st.switch_page("pages/Hasil_Pengolahan.py")

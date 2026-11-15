@@ -80,4 +80,4 @@ if not need_data():
         st.dataframe(s["kmo_per"].rename("KMO").round(3).to_frame().T, use_container_width=True)
 
     if st.button("Lanjut ke Proses Pengolahan"):
-        st.switch_page("pages/4_Proses_Pengolahan.py")
+        st.switch_page("pages/Proses_Pengolahan.py")
