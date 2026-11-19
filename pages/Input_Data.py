@@ -1,3 +1,6 @@
+import os
+import time
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -12,46 +15,126 @@ setup("Input Data")
 st.header("Input Data")
 t1, t2, t3 = st.tabs(["Dataset (Unggah / Bawaan)", "Input Manual Siswa", "Penjelasan Variabel"])
 
+
+def _nav_to_eksplorasi(key: str):
+    """Tombol navigasi ke halaman Eksplorasi Data (tanpa icon)."""
+    st.markdown("---")
+    if st.button("Lanjut ke Eksplorasi Data", type="primary",
+                 use_container_width=True, key=key):
+        st.switch_page("pages/Eksplorasi_Data.py")
+
+
+def _load_default_with_feedback():
+    """Muat dataset bawaan + tampilkan pesan interaktif bertahap."""
+    # 1) Spinner: proses sedang berjalan
+    with st.spinner("Memuat dataset bawaan student-mat.csv ..."):
+        time.sleep(0.4)  # beri jeda kecil agar spinner terlihat
+        try:
+            load_default()
+            df = st.session_state.get("df")
+        except Exception as e:
+            st.error(f"Gagal memuat dataset: {e}")
+            return
+
+    # 2) Toast: notifikasi ringkas di pojok kanan bawah
+    st.toast("Dataset bawaan berhasil dimuat", icon="✅")
+
+    # 3) Success: pesan hijau di halaman
+    if df is not None:
+        st.success(
+            f"Dataset bawaan **student-mat.csv** berhasil dimuat. "
+            f"Total **{len(df)} siswa** × **{len(FEATURES)} fitur** siap diproses."
+        )
+
+    # 4) Balloons: efek perayaan singkat
+    st.balloons()
+
+    # 5) Info lanjutan
+    st.info(
+        "Langkah berikutnya: periksa kualitas data di halaman **Eksplorasi Data**, "
+        "atau langsung ke **Proses Pengolahan** untuk menjalankan FCM + PCA."
+    )
+
+
 with t1:
-    st.write("Gunakan dataset bawaan atau unggah file CSV sendiri (separator `;` atau `,` terdeteksi otomatis). "
-             "Kolom wajib: " + ", ".join(f"`{c}`" for c in FEATURES) + ".")
+    st.write(
+        "Gunakan dataset bawaan atau unggah file CSV sendiri "
+        "(separator `;` atau `,` terdeteksi otomatis). "
+        "Kolom wajib: " + ", ".join(f"`{c}`" for c in FEATURES) + "."
+    )
     c1, c2 = st.columns([1, 2])
     with c1:
-        if os.path.exists(DEFAULT_CSV) and st.button("Gunakan dataset bawaan (student-mat.csv)", use_container_width=True):
-            load_default(); st.rerun()
+        if os.path.exists(DEFAULT_CSV) and st.button(
+            "Gunakan dataset bawaan (student-mat.csv)",
+            use_container_width=True,
+        ):
+            _load_default_with_feedback()
+            st.rerun()
+
+        # Jika dataset bawaan belum ada, tampilkan peringatan
+        if not os.path.exists(DEFAULT_CSV):
+            st.warning("File `student-mat.csv` tidak ditemukan di folder aplikasi.")
+
     with c2:
         up = st.file_uploader("Unggah dataset (.csv)", type=["csv"])
+
     if up is not None:
         try:
             raw = core.read_dataset(up)
             clean, msgs, info = core.validate_dataset(raw)
             alerts(msgs)
             if clean is not None:
-                st.caption(f"{info['baris_awal']} baris terbaca, {info['baris_valid']} baris valid.")
+                st.caption(
+                    f"{info['baris_awal']} baris terbaca, "
+                    f"{info['baris_valid']} baris valid."
+                )
                 if st.button("Pakai dataset yang diunggah", type="primary"):
-                    set_data(clean, f"{up.name} (unggahan)"); st.rerun()
+                    with st.spinner("Menyiapkan dataset unggahan ..."):
+                        time.sleep(0.3)
+                        set_data(clean, f"{up.name} (unggahan)")
+                    st.toast("Dataset unggahan aktif", icon="📥")
+                    st.rerun()
         except Exception as e:
             alert("danger", f"File tidak dapat dibaca: {e}")
+
     if st.session_state.get("df") is not None:
         d = st.session_state.df
         st.subheader("Data aktif")
-        stat_cards([("Sumber", st.session_state.data_source, "primary"), ("Baris", len(d), "success"),
-                    ("Fitur dipakai", len(FEATURES), "warning"), ("Missing", int(d[FEATURES].isna().sum().sum()), "secondary")], 120)
+        stat_cards(
+            [
+                ("Sumber", st.session_state.data_source, "primary"),
+                ("Baris", len(d), "success"),
+                ("Fitur dipakai", len(FEATURES), "warning"),
+                ("Missing", int(d[FEATURES].isna().sum().sum()), "secondary"),
+            ],
+            120,
+        )
         st.dataframe(d[FEATURES].head(50), use_container_width=True)
         st.markdown("**Statistik deskriptif**")
         st.dataframe(d[FEATURES].describe().T.round(3), use_container_width=True)
 
+    _nav_to_eksplorasi("nav_eksp_from_dataset")
+
+
 with t2:
-    st.write("Isi data satu siswa. Sistem memvalidasi rentang nilai, lalu (jika model sudah dijalankan) "
-             "menentukan cluster dan derajat keanggotaannya.")
+    st.write(
+        "Isi data satu siswa. Sistem memvalidasi rentang nilai, lalu "
+        "(jika model sudah dijalankan) menentukan cluster dan derajat keanggotaannya."
+    )
     with st.form("manual"):
         vals = {}
         cols = st.columns(4)
         for i, c in enumerate(FEATURES):
             lbl, lo, hi, de, desc = FEATURE_INFO[c]
             with cols[i % 4]:
-                vals[c] = st.number_input(f"{lbl} ({c})", min_value=float(lo - 100), max_value=float(hi + 1000),
-                                          value=float(de), step=1.0, help=f"{desc} Rentang valid {lo}–{hi}.")
+                vals[c] = st.number_input(
+                    f"{lbl} ({c})",
+                    min_value=float(lo - 100),
+                    max_value=float(hi + 1000),
+                    value=float(de),
+                    step=1.0,
+                    help=f"{desc} Rentang valid {lo}–{hi}.",
+                )
         ok = st.form_submit_button("Validasi & Tentukan Cluster", type="primary")
     if ok:
         errs = core.validate_single(vals)
@@ -60,15 +143,32 @@ with t2:
                 alert("danger", e, 58)
         else:
             st.session_state.manual = vals
+            st.toast("Data masukan valid", icon="✅")
             alert("success", "Data masukan valid.", 58)
     if "manual" in st.session_state:
         if "res" in st.session_state:
             render_prediction(st.session_state.res, st.session_state.manual)
         else:
-            alert("info", "Data tersimpan. Jalankan algoritma di menu <b>Proses Pengolahan</b> untuk melihat cluster siswa ini.")
+            alert(
+                "info",
+                "Data tersimpan. Jalankan algoritma di menu "
+                "<b>Proses Pengolahan</b> untuk melihat cluster siswa ini.",
+            )
+
+    _nav_to_eksplorasi("nav_eksp_from_manual")
+
 
 with t3:
-    rows = [{"Variabel": c, "Nama": v[0], "Rentang": f"{v[1]}–{v[2]}", "Penjelasan": v[4]}
-            for c, v in FEATURE_INFO.items()]
+    rows = [
+        {"Variabel": c, "Nama": v[0], "Rentang": f"{v[1]}–{v[2]}", "Penjelasan": v[4]}
+        for c, v in FEATURE_INFO.items()
+    ]
     bs_table(pd.DataFrame(rows), 640, index=False)
-    alert("info", "Atribut kategorikal (school, sex, Mjob, dll.) tidak dipakai karena FCM dan PCA berbasis jarak Euclidean pada data numerik.", 75)
+    alert(
+        "info",
+        "Atribut kategorikal (school, sex, Mjob, dll.) tidak dipakai karena "
+        "FCM dan PCA berbasis jarak Euclidean pada data numerik.",
+        75,
+    )
+
+    _nav_to_eksplorasi("nav_eksp_from_variabel")
