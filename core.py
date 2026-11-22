@@ -11,22 +11,22 @@ FEATURES = ["age", "Medu", "Fedu", "traveltime", "studytime", "failures",
 
 # (label Indonesia, min, max, default, deskripsi)
 FEATURE_INFO = {
-    "age":        ("Usia", 15, 22, 17, "Usia siswa (tahun), rentang 15–22."),
+    "age":        ("Usia", 15, 22, 17, "Usia siswa (tahun), rentang 15-22."),
     "Medu":       ("Pendidikan ibu", 0, 4, 2, "0 = tidak sekolah, 1 = SD, 2 = SMP, 3 = SMA, 4 = pendidikan tinggi."),
     "Fedu":       ("Pendidikan ayah", 0, 4, 2, "0 = tidak sekolah, 1 = SD, 2 = SMP, 3 = SMA, 4 = pendidikan tinggi."),
-    "traveltime": ("Waktu tempuh ke sekolah", 1, 4, 1, "1 = <15 mnt, 2 = 15–30 mnt, 3 = 30–60 mnt, 4 = >60 mnt."),
-    "studytime":  ("Waktu belajar mingguan", 1, 4, 2, "1 = <2 jam, 2 = 2–5 jam, 3 = 5–10 jam, 4 = >10 jam."),
-    "failures":   ("Jumlah kegagalan kelas", 0, 4, 0, "Jumlah kegagalan kelas sebelumnya (n jika 1≤n<3, selain itu 3–4)."),
-    "famrel":     ("Kualitas hubungan keluarga", 1, 5, 4, "1 = sangat buruk … 5 = sangat baik."),
-    "freetime":   ("Waktu luang setelah sekolah", 1, 5, 3, "1 = sangat sedikit … 5 = sangat banyak."),
-    "goout":      ("Frekuensi bergaul/keluar", 1, 5, 3, "1 = sangat jarang … 5 = sangat sering."),
-    "Dalc":       ("Konsumsi alkohol hari kerja", 1, 5, 1, "1 = sangat rendah … 5 = sangat tinggi."),
-    "Walc":       ("Konsumsi alkohol akhir pekan", 1, 5, 1, "1 = sangat rendah … 5 = sangat tinggi."),
-    "health":     ("Status kesehatan", 1, 5, 3, "1 = sangat buruk … 5 = sangat baik."),
-    "absences":   ("Jumlah absensi", 0, 93, 4, "Jumlah ketidakhadiran di sekolah (0–93)."),
-    "G1":         ("Nilai periode 1", 0, 20, 10, "Nilai periode pertama (skala 0–20)."),
-    "G2":         ("Nilai periode 2", 0, 20, 10, "Nilai periode kedua (skala 0–20)."),
-    "G3":         ("Nilai akhir", 0, 20, 10, "Nilai akhir (skala 0–20)."),
+    "traveltime": ("Waktu tempuh ke sekolah", 1, 4, 1, "1 = <15 mnt, 2 = 15-30 mnt, 3 = 30-60 mnt, 4 = >60 mnt."),
+    "studytime":  ("Waktu belajar mingguan", 1, 4, 2, "1 = <2 jam, 2 = 2-5 jam, 3 = 5-10 jam, 4 = >10 jam."),
+    "failures":   ("Jumlah kegagalan kelas", 0, 4, 0, "Jumlah kegagalan kelas sebelumnya."),
+    "famrel":     ("Kualitas hubungan keluarga", 1, 5, 4, "1 = sangat buruk sampai 5 = sangat baik."),
+    "freetime":   ("Waktu luang setelah sekolah", 1, 5, 3, "1 = sangat sedikit sampai 5 = sangat banyak."),
+    "goout":      ("Frekuensi bergaul/keluar", 1, 5, 3, "1 = sangat jarang sampai 5 = sangat sering."),
+    "Dalc":       ("Konsumsi alkohol hari kerja", 1, 5, 1, "1 = sangat rendah sampai 5 = sangat tinggi."),
+    "Walc":       ("Konsumsi alkohol akhir pekan", 1, 5, 1, "1 = sangat rendah sampai 5 = sangat tinggi."),
+    "health":     ("Status kesehatan", 1, 5, 3, "1 = sangat buruk sampai 5 = sangat baik."),
+    "absences":   ("Jumlah absensi", 0, 93, 4, "Jumlah ketidakhadiran di sekolah (0-93)."),
+    "G1":         ("Nilai periode 1", 0, 20, 10, "Nilai periode pertama (skala 0-20)."),
+    "G2":         ("Nilai periode 2", 0, 20, 10, "Nilai periode kedua (skala 0-20)."),
+    "G3":         ("Nilai akhir", 0, 20, 10, "Nilai akhir (skala 0-20)."),
 }
 
 
@@ -97,7 +97,8 @@ def memberships(X, V, m):
 
 def fcm_single(X, c, m, max_iter, tol, rng):
     N = X.shape[0]
-    U = rng.random((N, c)); U /= U.sum(1, keepdims=True)
+    U = rng.random((N, c))
+    U /= U.sum(1, keepdims=True)
     hist = []
     for it in range(1, max_iter + 1):
         U_old = U
@@ -145,7 +146,7 @@ def _tier_names(k):
 
 
 TIER_ADVICE = {
-    "Berprestasi Tinggi": "Pertahankan dengan program pengayaan/akselerasi dan peran tutor sebaya.",
+    "Berprestasi Tinggi": "Pertahankan dengan program pengayaan atau akselerasi dan peran tutor sebaya.",
     "Menengah Atas": "Potensial naik ke kelompok tertinggi; dorong konsistensi belajar dan target nilai lebih tinggi.",
     "Menengah": "Perlu pendampingan belajar rutin dan monitoring perkembangan nilai antarperiode.",
     "Menengah Bawah": "Perlu bimbingan belajar tambahan dan pemantauan kehadiran serta kebiasaan belajar.",
@@ -155,15 +156,21 @@ TIER_ADVICE = {
 
 
 def _traits(z):
-    """Skor sifat gabungan (z-score) -> list (|skor|, frasa)."""
+    """Skor sifat gabungan (z-score) menjadi list (abs skor, frasa, skor)."""
     g = lambda cols: float(np.mean([z[c] for c in cols]))
     t = []
-    s = g(["failures"]);               t.append((abs(s), "Riwayat Kegagalan Tinggi" if s > 0 else "Jarang Gagal Kelas", s))
-    s = g(["absences"]);               t.append((abs(s), "Sering Absen" if s > 0 else "Kehadiran Baik", s))
-    s = g(["Dalc", "Walc", "goout"]);  t.append((abs(s), "Pergaulan & Konsumsi Alkohol Tinggi" if s > 0 else "Gaya Hidup Tenang", s))
-    s = g(["Medu", "Fedu"]);           t.append((abs(s), "Orang Tua Berpendidikan Tinggi" if s > 0 else "Orang Tua Berpendidikan Rendah", s))
-    s = g(["studytime"]);              t.append((abs(s), "Waktu Belajar Tinggi" if s > 0 else "Waktu Belajar Rendah", s))
-    s = g(["age"]);                    t.append((abs(s), "Usia Lebih Tua" if s > 0 else "Usia Lebih Muda", s))
+    s = g(["failures"])
+    t.append((abs(s), "Riwayat Kegagalan Tinggi" if s > 0 else "Jarang Gagal Kelas", s))
+    s = g(["absences"])
+    t.append((abs(s), "Sering Absen" if s > 0 else "Kehadiran Baik", s))
+    s = g(["Dalc", "Walc", "goout"])
+    t.append((abs(s), "Pergaulan dan Konsumsi Alkohol Tinggi" if s > 0 else "Gaya Hidup Tenang", s))
+    s = g(["Medu", "Fedu"])
+    t.append((abs(s), "Orang Tua Berpendidikan Tinggi" if s > 0 else "Orang Tua Berpendidikan Rendah", s))
+    s = g(["studytime"])
+    t.append((abs(s), "Waktu Belajar Tinggi" if s > 0 else "Waktu Belajar Rendah", s))
+    s = g(["age"])
+    t.append((abs(s), "Usia Lebih Tua" if s > 0 else "Usia Lebih Muda", s))
     return t
 
 
@@ -180,7 +187,7 @@ def name_clusters(df_feat, labels, k):
         traits = sorted(_traits(z), key=lambda x: -x[0])
         main = traits[0] if traits and traits[0][0] >= 0.4 else None
         tier = tiers[j]
-        name = f"{tier} – {main[1]}" if main else tier
+        name = f"{tier} - {main[1]}" if main else tier
         feats = sorted([(abs(v), c, v) for c, v in z.items()], reverse=True)[:4]
         ciri = []
         for _, c, v in feats:
@@ -205,6 +212,131 @@ def name_clusters(df_feat, labels, k):
     return out
 
 
+# ----------------------------------------------------------------- kelayakan PCA: KMO dan Bartlett (detail)
+def _corr(df):
+    """Matriks korelasi Pearson antar fitur."""
+    return np.corrcoef(df[FEATURES].astype(float).values, rowvar=False)
+
+
+def _anti_image(R):
+    """Matriks anti-image = -(R^-1) / sqrt(diag(R^-1) outer diag(R^-1)).
+    Diagonal-nya adalah nilai KMO per fitur (MSA)."""
+    Rinv = np.linalg.pinv(R)
+    d = np.sqrt(np.outer(np.diag(Rinv), np.diag(Rinv)))
+    A = -Rinv / d
+    return A, Rinv
+
+
+def _kmo_matrix(R, A):
+    """Matriks korelasi parsial (off-diagonal) dan hitung KMO per fitur dan total.
+    KMO_j = sum r_jk^2 / (sum r_jk^2 + sum a_jk^2)
+    KMO   = sum sum r_jk^2 / (sum sum r_jk^2 + sum sum a_jk^2)
+    """
+    Rp = R.copy()
+    Ap = A.copy()
+    np.fill_diagonal(Rp, 0)
+    np.fill_diagonal(Ap, 0)
+    num_per = (Rp ** 2).sum(axis=0)
+    den_per = num_per + (Ap ** 2).sum(axis=0)
+    kmo_per = num_per / den_per
+    num_tot = (Rp ** 2).sum()
+    den_tot = num_tot + (Ap ** 2).sum()
+    kmo_tot = float(num_tot / den_tot)
+    return kmo_per, kmo_tot, Rp, Ap
+
+
+def _kmo_category(v):
+    if v >= 0.90:
+        return ("marvelous", "sangat baik (marvelous)")
+    if v >= 0.80:
+        return ("meritorious", "berjasa (meritorious)")
+    if v >= 0.70:
+        return ("middling", "cukup baik (middling)")
+    if v >= 0.60:
+        return ("mediocre", "sedang (mediocre)")
+    if v >= 0.50:
+        return ("miserable", "buruk (miserable)")
+    return ("unacceptable", "tidak dapat diterima")
+
+
+def _bartlett(R, n, p):
+    """Uji Bartlett's Test of Sphericity.
+    H0: matriks korelasi = identitas (tidak ada korelasi antar fitur).
+    chi2 = -(n - 1 - (2p + 5) / 6) * ln det(R)
+    df   = p (p - 1) / 2
+    """
+    from scipy import stats
+    sign, logdet = np.linalg.slogdet(R)
+    if logdet == 0 or not np.isfinite(logdet):
+        eig = np.linalg.eigvalsh(R)
+        logdet = float(np.sum(np.log(np.clip(eig, 1e-12, None))))
+    chi2 = -(n - 1 - (2 * p + 5) / 6) * logdet
+    dof = p * (p - 1) / 2
+    pval = float(stats.chi2.sf(chi2, dof))
+    return {"chi2": float(chi2), "dof": int(dof), "p": pval,
+            "logdet": float(logdet), "n": int(n), "p_feat": int(p)}
+
+
+def pca_suitability(df):
+    """Uji kelayakan PCA secara menyeluruh dan transparan.
+
+    Mengembalikan dict berisi semua komponen perhitungan sehingga dapat
+    diaudit atau ditampilkan langkah demi langkah di UI.
+    """
+    X = df[FEATURES].astype(float)
+    n, p = X.shape
+
+    # 1. Korelasi
+    R = _corr(df)
+
+    # 2. Anti-image dan matriks korelasi parsial
+    A, Rinv = _anti_image(R)
+
+    # 3. KMO total dan per fitur
+    kmo_per, kmo_tot, Rp, Ap = _kmo_matrix(R, A)
+    kmo_cat_code, kmo_cat_lbl = _kmo_category(kmo_tot)
+
+    # 4. Bartlett
+    bart = _bartlett(R, n, p)
+    bart_sig = bart["p"] < 0.05
+
+    # 5. Ringkasan tambahan
+    Rvals = R[np.triu_indices(p, 1)]
+    mean_abs = float(np.abs(Rvals).mean())
+    max_pair_idx = int(np.argmax(np.abs(Rvals)))
+    triu_i, triu_j = np.triu_indices(p, 1)
+    max_pair = (FEATURES[triu_i[max_pair_idx]], FEATURES[triu_j[max_pair_idx]],
+                float(Rvals[max_pair_idx]))
+    eigenvalues = np.linalg.eigvalsh(R)[::-1]
+    n_eig_gt1 = int((eigenvalues > 1).sum())
+
+    return {
+        # input
+        "n": int(n), "p": int(p),
+        # korelasi dan anti-image (lengkap, untuk ditabel atau diplot)
+        "R": pd.DataFrame(R, index=FEATURES, columns=FEATURES),
+        "Rinv": pd.DataFrame(Rinv, index=FEATURES, columns=FEATURES),
+        "A": pd.DataFrame(A, index=FEATURES, columns=FEATURES),
+        "Rp": pd.DataFrame(Rp, index=FEATURES, columns=FEATURES),
+        "Ap": pd.DataFrame(Ap, index=FEATURES, columns=FEATURES),
+        # KMO
+        "kmo": kmo_tot,
+        "kmo_per": pd.Series(kmo_per, index=FEATURES),
+        "kmo_num": float((Rp ** 2).sum()),
+        "kmo_den": float((Rp ** 2).sum() + (Ap ** 2).sum()),
+        "kmo_cat": kmo_cat_lbl,
+        "kmo_cat_code": kmo_cat_code,
+        # Bartlett
+        "bartlett": bart,
+        "bartlett_sig": bart_sig,
+        # ringkasan
+        "mean_abs_corr": mean_abs,
+        "max_pair": max_pair,
+        "eigenvalues": pd.Series(eigenvalues, index=[f"lambda{i+1}" for i in range(p)]),
+        "n_eig_gt1": n_eig_gt1,
+    }
+
+
 # ----------------------------------------------------------------- pipeline
 def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
                  k_min=2, k_max=8, k_mode="auto", k_manual=3, seed=42):
@@ -226,7 +358,8 @@ def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
     for k in range(k_min, k_max + 1):
         r = fcm(X_pca, k, m, max_iter, tol, n_init, seed)
         deg = is_degenerate(r["U"])
-        rows.append({"k": k, "Silhouette": silhouette_score(X_pca, r["labels"]) if len(set(r["labels"])) > 1 else np.nan,
+        rows.append({"k": k,
+                     "Silhouette": silhouette_score(X_pca, r["labels"]) if len(set(r["labels"])) > 1 else np.nan,
                      "Partition Coefficient": partition_coefficient(r["U"]),
                      "Degenerat": deg})
     k_table = pd.DataFrame(rows).set_index("k")
@@ -234,7 +367,7 @@ def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
     K = k_auto if k_mode == "auto" else int(k_manual)
 
     res = fcm(X_pca, K, m, max_iter, tol, n_init, seed)
-    # urutkan cluster dari nilai rata-rata G (G1,G2,G3) tertinggi -> terendah
+    # urutkan cluster dari nilai rata-rata G (G1, G2, G3) tertinggi ke terendah
     gmean = np.array([df.loc[res["labels"] == j, ["G1", "G2", "G3"]].values.mean()
                       if (res["labels"] == j).any() else -1 for j in range(K)])
     order = np.argsort(-gmean)
@@ -249,8 +382,8 @@ def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
     uniq = len(set(labels)) > 1
     sil_p = silhouette_score(X_pca, labels) if uniq else np.nan
     sil_samples = silhouette_samples(X_pca, labels) if uniq else np.zeros(len(labels))
-    # empat komponen evaluasi: (1) KMO & Bartlett sebelum ekstraksi, (2) explained variance sesudah ekstraksi,
-    # (3) Silhouette score, (4) Fuzzy Partition Coefficient
+    # empat komponen evaluasi: KMO dan Bartlett sebelum ekstraksi,
+    # explained variance sesudah ekstraksi, Silhouette, dan Fuzzy Partition Coefficient
     metrics = {
         "Silhouette (ruang PCA)": sil_p,
         "Partition Coefficient": partition_coefficient(U),
@@ -272,12 +405,13 @@ def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
         "params": dict(m=m, max_iter=max_iter, tol=tol, n_init=n_init, var_thr=var_thr,
                        k_min=k_min, k_max=k_max, k_mode=k_mode, seed=seed),
         "scaler": scaler, "pca": pca, "pca2": pca2, "X": X, "X_pca": X_pca, "X_vis": X_vis,
-        "evr": evr, "cum": cum, "n_comp": n_comp, "loadings": pd.DataFrame(
-            pca2.components_.T, index=FEATURES, columns=["PC1", "PC2"]),
+        "evr": evr, "cum": cum, "n_comp": n_comp,
+        "loadings": pd.DataFrame(pca2.components_.T, index=FEATURES, columns=["PC1", "PC2"]),
         "k_table": k_table, "k_auto": k_auto, "K": K,
         "U": U, "centers": centers, "labels": labels, "hist": res["hist"],
         "cluster_info": info, "names": names, "metrics": metrics,
-        "sil_samples": sil_samples, "suit": suit, "n_iter": res["n_iter"], "J": res["J"], "result_df": result_df,
+        "sil_samples": sil_samples, "suit": suit, "n_iter": res["n_iter"], "J": res["J"],
+        "result_df": result_df,
         "degenerate": is_degenerate(U),
         "profile": df[FEATURES].assign(Cluster=labels).groupby("Cluster").mean(),
     }
@@ -292,27 +426,6 @@ def predict_one(res, values, m=None):
     u = memberships(zp, res["centers"], m)[0]
     zv = res["pca2"].transform(z)[0]
     return u, zv
-
-
-# ----------------------------------------------------------------- tambahan: EDA & prediksi massal
-def pca_suitability(df):
-    """Uji kelayakan PCA: Bartlett sphericity & KMO. Mengembalikan dict."""
-    from scipy import stats
-    X = df[FEATURES].astype(float)
-    n, p = X.shape
-    R = np.corrcoef(X.values, rowvar=False)
-    sign, logdet = np.linalg.slogdet(R)
-    chi2 = -(n - 1 - (2 * p + 5) / 6) * logdet
-    dof = p * (p - 1) / 2
-    pval = float(stats.chi2.sf(chi2, dof))
-    Rinv = np.linalg.pinv(R)
-    d = np.sqrt(np.outer(np.diag(Rinv), np.diag(Rinv)))
-    partial = -Rinv / d
-    np.fill_diagonal(R, 0); np.fill_diagonal(partial, 0)
-    kmo_per = (R ** 2).sum(0) / ((R ** 2).sum(0) + (partial ** 2).sum(0))
-    kmo = float((R ** 2).sum() / ((R ** 2).sum() + (partial ** 2).sum()))
-    return {"chi2": float(chi2), "dof": int(dof), "p": pval, "kmo": kmo,
-            "kmo_per": pd.Series(kmo_per, index=FEATURES)}
 
 
 def predict_batch(res, df):

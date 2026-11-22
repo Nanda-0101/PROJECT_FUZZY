@@ -64,6 +64,37 @@ def _format_p_value(value):
         return "< 0,001"
     return f"{value:.4f}".replace(".", ",")
 
+def _get_bartlett_stats(suit):
+    """
+    Mengambil statistik Bartlett dari struktur suit.
+
+    Mendukung:
+    1. Struktur nested: suit["bartlett"]["chi2"]
+    2. Struktur flat:   suit["chi2"]
+    """
+    bartlett = suit.get("bartlett", {})
+
+    if isinstance(bartlett, dict) and all(
+        key in bartlett for key in ("chi2", "dof", "p")
+    ):
+        return {
+            "chi2": float(bartlett["chi2"]),
+            "dof": int(bartlett["dof"]),
+            "p": float(bartlett["p"]),
+        }
+
+    if all(key in suit for key in ("chi2", "dof", "p")):
+        return {
+            "chi2": float(suit["chi2"]),
+            "dof": int(suit["dof"]),
+            "p": float(suit["p"]),
+        }
+
+    raise KeyError(
+        "Statistik Bartlett tidak ditemukan. "
+        "Pastikan suit memiliki bartlett['chi2'], "
+        "bartlett['dof'], dan bartlett['p']."
+    )
 
 def _modified_pc(fpc, k):
     """Partition Coefficient ternormalisasi ke rentang 0 sampai 1."""
@@ -115,7 +146,10 @@ if not need_result():
     threshold = result["params"]["var_thr"]
 
     kmo = float(suit["kmo"])
-    p_value = float(suit["p"])
+    bartlett = _get_bartlett_stats(suit)
+    chi2 = bartlett["chi2"]
+    dof = bartlett["dof"]
+    p_value = bartlett["p"]
     bartlett_ok = p_value < 0.05
     selected_variance = float(metrics["Explained variance (komponen terpilih)"])
     top2_variance = float(metrics["Explained variance (PC1+PC2)"])
@@ -134,7 +168,8 @@ if not need_result():
             _score_card("Bartlett", _format_p_value(p_value),
                         "Signifikan" if bartlett_ok else "Tidak signifikan",
                         "success" if bartlett_ok else "danger",
-                        f"p-value dengan chi-square {suit['chi2']:.1f}", "diagram-3"),
+                        f"Chi-square = {chi2:.1f}; df = {dof}",
+                        "diagram-3"),
             _score_card("Explained variance", f"{selected_variance:.1%}",
                         f"{n_comp} dari {len(evr)} komponen",
                         _variance_color(selected_variance),
@@ -185,7 +220,7 @@ if not need_result():
     with bartlett_col:
         st.markdown("#### Uji sphericity Bartlett")
         b1, b2 = st.columns(2)
-        b1.metric("Chi-square", f"{suit['chi2']:.2f}", f"{suit['dof']} derajat bebas", delta_color="off")
+        b1.metric("Chi-square", f"{chi2:.2f}", f"{dof} derajat bebas", delta_color="off")
         b2.metric("p-value", _format_p_value(p_value))
         if bartlett_ok:
             st.success(
