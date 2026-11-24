@@ -1,4 +1,3 @@
-"""Modul bersama: helper Bootstrap, state sesi, sidebar, dan komponen yang dipakai semua halaman."""
 import os
 import numpy as np
 import pandas as pd
@@ -25,7 +24,7 @@ PAGE_FILES = [
     ("Informasi Sistem", "pages/8_Informasi_Sistem.py"),
 ]
 
-# ======================================================= Bootstrap helpers
+# Bootstrap helpers
 BOOT_CSS = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
 BOOT_JS = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 BOOT_ICON = "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
@@ -83,7 +82,7 @@ def stat_cards(items, height=120):
 
 
 
-# ======================================================= State
+# State
 def set_data(df, source):
     st.session_state.df = df
     st.session_state.data_source = source
@@ -145,7 +144,7 @@ def setup(title):
     navbar(title)
 
 
-# ======================================================= Prediksi siswa baru
+# Prediksi siswa baru
 def render_prediction(res, values):
     u, zv = core.predict_one(res, values)
     j = int(u.argmax())

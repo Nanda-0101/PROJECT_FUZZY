@@ -18,9 +18,7 @@ if not need_result():
                 ("Silhouette", f"{r['metrics']['Silhouette (ruang PCA)']:.3f}", "warning"),
                 ("Partition Coefficient", f"{r['metrics']['Partition Coefficient']:.3f}", "secondary")], 120)
 
-    # =====================================================================
     # CARA PENAMAAN CLUSTER (RULE-BASED)
-    # =====================================================================
     st.subheader("Cara Penamaan Cluster (Rule-Based)")
     st.caption("Nama cluster dihasilkan otomatis oleh fungsi core.name_clusters berdasarkan aturan berikut. "
                "Tidak ada penamaan manual dari user.")
@@ -77,9 +75,7 @@ if not need_result():
     ], columns=["Tier", "Saran Tindak Lanjut"])
     st.dataframe(saran_df, hide_index=True, use_container_width=True)
 
-    # --------------------------------------------------------------
     # Tabel hasil penamaan: tier, sifat terpilih, nama akhir
-    # --------------------------------------------------------------
     st.markdown("**Hasil penerapan aturan pada cluster saat ini:**")
     mu = st.session_state.df[FEATURES].mean()
     sd = st.session_state.df[FEATURES].std().replace(0, 1)
@@ -120,9 +116,7 @@ if not need_result():
         })
     st.dataframe(pd.DataFrame(rule_rows), hide_index=True, use_container_width=True)
 
-    # --------------------------------------------------------------
     # Detail z-score per cluster (dasar pemilihan sifat)
-    # --------------------------------------------------------------
     st.markdown("**Dasar perhitungan: rata-rata z-score per cluster per fitur:**")
     z_df = ((r["profile"] - mu) / sd).round(2)
     z_df.index = [f"C{i}: {names[i]}" for i in range(K)]
@@ -133,9 +127,7 @@ if not need_result():
 
     st.divider()
 
-    # =====================================================================
     # ARTI SETIAP CLUSTER (kartu)
-    # =====================================================================
     st.subheader("Arti setiap cluster")
     clr = ["primary", "success", "warning", "danger", "info", "secondary", "dark", "primary"]
     cards = "".join(f"""<div class="col-md-{12 // min(K, 3) if K <= 3 else 6} mb-3"><div class="card h-100 border-{clr[i % 8]} shadow-sm bg-white text-dark">
@@ -145,9 +137,7 @@ if not need_result():
                     for i, c in enumerate(info))
     bs(f'<div class="row">{cards}</div>', 330 if K <= 3 else 330 * ((K + 1) // 2))
 
-    # =====================================================================
     # VISUALISASI
-    # =====================================================================
     st.subheader("Visualisasi")
     v1, v2 = st.columns(2)
     with v1:
@@ -198,17 +188,13 @@ if not need_result():
         st.pyplot(fig)
         plt.close(fig)
 
-    # =====================================================================
     # PROFIL RATA-RATA
-    # =====================================================================
     st.subheader("Profil rata-rata fitur per cluster")
     prof = r["profile"].T.copy()
     prof.columns = [f"C{i}: {n}" for i, n in enumerate(names)]
     st.dataframe(prof.round(2), use_container_width=True)
 
-    # =====================================================================
     # TABEL HASIL PER SISWA
-    # =====================================================================
     st.subheader("Tabel hasil per siswa")
     pick = st.multiselect("Filter cluster", names, default=names)
     view = rd[rd["Nama Cluster"].isin(pick)].copy()
@@ -218,9 +204,7 @@ if not need_result():
     st.download_button("Unduh hasil (CSV)", view.to_csv(index=False).encode("utf-8"),
                        "hasil_cluster_siswa.csv", "text/csv")
 
-    # =====================================================================
     # INTERPRETASI
-    # =====================================================================
     st.subheader("Interpretasi")
     maxu = r["U"].max(1)
     amb = float((maxu < 0.6).mean())
@@ -243,9 +227,7 @@ if not need_result():
        "".join(f"<li class='mb-1'>{l}</li>" for l in lines) + "</ul></div></div>",
        120 + 52 * len(lines))
 
-    # =====================================================================
     # PREDIKSI SISWA BARU
-    # =====================================================================
     st.subheader("Prediksi siswa baru")
     alert("info", "Untuk menentukan cluster siswa baru (satu siswa atau banyak siswa via CSV), "
                   "buka halaman <b>Prediksi Siswa Baru</b>.", 62)

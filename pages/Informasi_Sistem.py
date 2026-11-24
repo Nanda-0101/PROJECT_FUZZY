@@ -1,8 +1,3 @@
-"""
-
-Menjelaskan tujuan, alur komputasi, rumus, fitur, parameter, dan batas
-interpretasi aplikasi segmentasi siswa dengan PCA dan Fuzzy C-Means.
-"""
 import math
 
 import pandas as pd

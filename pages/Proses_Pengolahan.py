@@ -55,9 +55,7 @@ if not need_data():
                     ("k dipakai", r["K"], "warning"), ("Iterasi konvergen", r["n_iter"], "secondary")], 120)
         st.subheader("Hasil antara")
 
-        # =================================================================
         # TAHAP 1 - STANDARDISASI
-        # =================================================================
         with st.expander("Tahap 1 - Standardisasi", expanded=False):
             st.markdown("""
 **Tujuan:** menyetarakan skala setiap fitur agar fitur dengan rentang besar
@@ -80,9 +78,7 @@ baku 1, sehingga seluruh fitur berada pada skala yang sebanding.
             st.write("Setelah z-score (rata-rata 0, simpangan baku 1)")
             st.dataframe(b.round(3), use_container_width=True)
 
-        # =================================================================
         # TAHAP 2 - PCA
-        # =================================================================
         with st.expander("Tahap 2 - PCA: explained variance", expanded=True):
             st.markdown("""
 **Tujuan:** mereduksi 16 fitur menjadi beberapa komponen utama yang saling
@@ -135,9 +131,7 @@ $\\text{EVR}_{\\text{kum}}(k) \\geq$ ambang (parameter di halaman ini).
                 f"Total varians yang dipertahankan: {r['cum'][r['n_comp']-1]:.2%}."
             )
 
-        # =================================================================
         # TAHAP 3 - PEMILIHAN K
-        # =================================================================
         with st.expander("Tahap 3 - Pemilihan jumlah cluster (k)", expanded=True):
             st.markdown("""
 **Tujuan:** memilih jumlah cluster $k$ terbaik dengan membandingkan kualitas
@@ -187,9 +181,7 @@ agar tidak memilih $k$ hanya dari satu sudut pandang.
             plt.close(fig)
             st.caption(f"k otomatis (Silhouette tertinggi) = {r['k_auto']}; k yang dipakai = {r['K']}.")
 
-        # =================================================================
         # TAHAP 4 - ITERASI FCM
-        # =================================================================
         with st.expander("Tahap 4 - Iterasi FCM & pusat cluster", expanded=False):
             st.markdown("""
 **Tujuan:** menjalankan FCM final dengan $k$ terpilih untuk memperoleh pusat
@@ -215,9 +207,7 @@ $\\Delta = \\max_{i,k} |u_{ik}^{(t)} - u_{ik}^{(t-1)}| < \\epsilon$.
             st.write("Pusat cluster (dikembalikan ke skala fitur asli)")
             st.dataframe(cdf.round(2), use_container_width=True)
 
-        # =================================================================
         # TAHAP 5 - PERHITUNGAN DETAIL FCM
-        # =================================================================
         with st.expander("Tahap 5 - Perhitungan Detail FCM (angka per iterasi)", expanded=False):
             st.markdown("""
 **Rumus yang dipakai:**
@@ -254,7 +244,7 @@ $\\Delta = \\max_{i,k} |u_{ik}^{(t)} - u_{ik}^{(t-1)}| < \\epsilon$.
             st.write("Pusat cluster di ruang PCA:")
             st.dataframe(df_V.round(4), use_container_width=True)
 
-            # ------------------ RINCIAN LANGKAH FCM ------------------
+            # RINCIAN LANGKAH FCM
             with st.expander("Simulasi 1 langkah iterasi FCM (dari U_final)", expanded=False):
                 st.caption(
                     "Langkah demonstrasi proses hitung: mengambil U_final lalu melakukan satu iterasi "
@@ -328,7 +318,7 @@ $\\Delta = \\max_{i,k} |u_{ik}^{(t)} - u_{ik}^{(t-1)}| < \\epsilon$.
                 else:
                     alert("info", "Delta >= epsilon -> lanjut iterasi berikutnya.", 60)
 
-            # ------------------ RIWAYAT KONVERGENSI ------------------
+            # RIWAYAT KONVERGENSI
             st.markdown("#### Riwayat iterasi keseluruhan (dari fungsi FCM)")
             hist = r["hist"]
             it_range = list(range(1, len(hist) + 1))
@@ -343,7 +333,7 @@ $\\Delta = \\max_{i,k} |u_{ik}^{(t)} - u_{ik}^{(t-1)}| < \\epsilon$.
                 f"J akhir = **{r['J']:.6f}** dan toleransi = {eps_val}."
             )
 
-            # ------------------ INDEKS VALIDITAS (HANYA J & FPC) ------------------
+            # INDEKS VALIDITAS (HANYA J & FPC)
             st.markdown("#### Indeks validitas fuzzy (setelah konvergen)")
 
             def hitung_indeks(U, V, m_):

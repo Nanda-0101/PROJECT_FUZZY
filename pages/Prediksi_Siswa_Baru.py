@@ -65,7 +65,7 @@ if not need_result():
 5. **Pilih cluster** dengan derajat keanggotaan tertinggi.
             """)
 
-            # ---------- Ambil data latih & parameter dari hasil training ----------
+            # Ambil data latih & parameter dari hasil training
             scaler = r["scaler"]
             pca = r["pca"]
             pca2 = r["pca2"]
@@ -76,7 +76,7 @@ if not need_result():
 
             values = st.session_state.manual
 
-            # ---------- LANGKAH 1: Standardisasi ----------
+            # LANGKAH 1: Standardisasi
             with st.expander("Langkah 1 - Standardisasi (z-score) dengan scaler data latih", expanded=True):
                 st.markdown("""
 **Rumus:**
@@ -104,7 +104,7 @@ yang tersimpan dalam objek `StandardScaler`), bukan dari data siswa baru.
                     f"= {z_new[0]:.4f}"
                 )
 
-            # ---------- LANGKAH 2: Proyeksi PCA ----------
+            # LANGKAH 2: Proyeksi PCA
             with st.expander("Langkah 2 - Proyeksi ke ruang PCA", expanded=True):
                 st.markdown(f"""
 **Rumus:**
@@ -128,7 +128,7 @@ dikurangi rata-rata PCA jika ada. Hasilnya vektor berdimensi {n_comp}.
                     f"Informasi ini yang akan dipakai untuk menghitung jarak ke pusat cluster."
                 )
 
-            # ---------- LANGKAH 3: Jarak ke setiap pusat cluster ----------
+            # LANGKAH 3: Jarak ke setiap pusat cluster
             with st.expander("Langkah 3 - Jarak Euclidean ke setiap pusat cluster", expanded=True):
                 st.markdown(f"""
 **Rumus:**
@@ -152,7 +152,7 @@ dengan $v_{{kj}}$ = komponen ke-$j$ dari pusat cluster ke-$k$ (dalam ruang PCA).
                     "Semakin kecil nilai d_k, semakin dekat siswa ke pusat cluster k."
                 )
 
-            # ---------- LANGKAH 4: Derajat keanggotaan fuzzy ----------
+            # LANGKAH 4: Derajat keanggotaan fuzzy
             with st.expander("Langkah 4 - Derajat keanggotaan fuzzy (FCM)", expanded=True):
                 st.markdown(f"""
 **Rumus FCM untuk keanggotaan siswa baru:**
@@ -184,7 +184,7 @@ dengan:
                 st.dataframe(df_l5.round(4), use_container_width=True, hide_index=True)
                 st.caption(f"Cek jumlah u_k = **{u_new.sum():.6f}** (harus sama dengan 1).")
 
-            # ---------- LANGKAH 5: Cluster dengan keanggotaan tertinggi ----------
+            # LANGKAH 5: Cluster dengan keanggotaan tertinggi
             with st.expander("Langkah 5 - Tentukan cluster akhir (argmax)", expanded=True):
                 st.markdown("""
 **Aturan keputusan:**
@@ -215,7 +215,7 @@ Cluster akhir = cluster dengan derajat keanggotaan fuzzy terbesar.
                         "meminta data tambahan untuk mempertegas posisi."
                     )
 
-            # ---------- VISUALISASI POSISI RELATIF ----------
+            # VISUALISASI POSISI RELATIF
             st.markdown("#### Posisi siswa baru relatif terhadap pusat cluster (ruang PC1-PC2)")
             st.caption(
                 "Grafik ini memproyeksikan siswa baru dan pusat cluster ke 2 komponen utama pertama "
@@ -238,9 +238,7 @@ Cluster akhir = cluster dengan derajat keanggotaan fuzzy terbesar.
             st.pyplot(fig)
             plt.close(fig)
 
-    # =====================================================================
     # TAB 2 - BANYAK SISWA (CSV)
-    # =====================================================================
     with t2:
         st.write("Unggah CSV siswa baru dengan kolom: " + ", ".join(f"`{c}`" for c in FEATURES) + ".")
         tpl = pd.DataFrame([{c: FEATURE_INFO[c][3] for c in FEATURES}])

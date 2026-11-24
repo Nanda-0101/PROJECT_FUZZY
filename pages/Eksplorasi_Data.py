@@ -15,9 +15,7 @@ st.header("Eksplorasi Data")
 st.caption("Memahami karakteristik data sebelum diproses: sebaran, korelasi, outlier, "
            "dan kelayakan data untuk PCA. Parameter PCA mengikuti setelan di halaman Proses Pengolahan.")
 
-# =====================================================================
 # STATUS KELENGKAPAN DATA (banner di bagian atas)
-# =====================================================================
 if not need_data():
     d = st.session_state.df
     source = st.session_state.get("data_source", "data aktif")
@@ -39,7 +37,7 @@ if not need_data():
             if st.button("Ganti data", use_container_width=True):
                 st.switch_page("pages/Input_Data.py")
         with c3:
-            if st.button("Lanjut proses", type="primary", use_container_width=True):
+            if st.button("Lanjut ke proses pengolahan", type="primary", use_container_width=True):
                 st.switch_page("pages/Proses_Pengolahan.py")
 
     X = d[FEATURES].astype(float)
@@ -67,9 +65,7 @@ if not need_data():
 
     t1, t2, t3, t4 = st.tabs(["Distribusi", "Korelasi", "Outlier", "Kelayakan PCA"])
 
-    # ---------------------------------------------------------------
     # TAB 1 - DISTRIBUSI
-    # ---------------------------------------------------------------
     with t1:
         fig, axs = plt.subplots(4, 4, figsize=(13, 9))
         for ax, c in zip(axs.ravel(), FEATURES):
@@ -92,9 +88,7 @@ if not need_data():
         st.caption("Skewness dengan |nilai| lebih besar dari 1 menandakan sebaran sangat miring "
                    "(mis. absences dan failures), sehingga standardisasi diperlukan agar fitur sebanding.")
 
-    # ---------------------------------------------------------------
     # TAB 2 - KORELASI
-    # ---------------------------------------------------------------
     with t2:
         C = X.corr()
         fig, ax = plt.subplots(figsize=(8, 6.5))
@@ -117,9 +111,7 @@ if not need_data():
             use_container_width=True, hide_index=True,
         )
 
-    # ---------------------------------------------------------------
     # TAB 3 - OUTLIER
-    # ---------------------------------------------------------------
     with t3:
         q1, q3 = X.quantile(.25), X.quantile(.75)
         iqr = q3 - q1
@@ -144,13 +136,11 @@ if not need_data():
               "adalah data siswa yang sah dan justru informatif untuk mendeteksi siswa berisiko.",
               75)
 
-    # ---------------------------------------------------------------
     # TAB 4 - KELAYAKAN PCA
-    # ---------------------------------------------------------------
     with t4:
         s = core.pca_suitability(d)
 
-        # ---------- Panel ubah parameter PCA ----------
+        # Panel ubah parameter PCA
         with st.expander("Ubah Parameter PCA", expanded=False):
             st.caption("Perubahan di sini akan diteruskan ke halaman Proses Pengolahan.")
             new_thr = st.slider("Ambang explained variance PCA",
@@ -170,7 +160,7 @@ if not need_data():
                 )
                 st.rerun()
 
-        # ---------- Kartu ringkasan PCA ----------
+        # Kartu ringkasan PCA
         with st.container(border=True):
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Jumlah komponen PCA terpilih",
@@ -183,7 +173,7 @@ if not need_data():
 
         st.divider()
 
-        # ---------- BARTLETT ----------
+        # BARTLETT
         st.markdown("### Uji Bartlett's Test of Sphericity")
         st.markdown(
             "**H0:** matriks korelasi fitur = matriks identitas "
@@ -224,7 +214,7 @@ if not need_data():
 
         st.divider()
 
-        # ---------- KMO ----------
+        # KMO
         st.markdown("### Uji Kaiser-Meyer-Olkin (KMO)")
         st.markdown(
             "KMO mengukur proporsi varians yang mungkin disebabkan faktor bersama. "
@@ -280,7 +270,7 @@ if not need_data():
 
         st.divider()
 
-        # ---------- KESIMPULAN + NAVIGASI ----------
+        # KESIMPULAN + NAVIGASI
         st.markdown("### Kesimpulan Kelayakan PCA")
         layak = s["bartlett_sig"] and s["kmo"] >= 0.60
         if layak:

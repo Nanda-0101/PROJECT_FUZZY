@@ -16,9 +16,7 @@ st.header("Input Data")
 t1, t2, t3 = st.tabs(["Dataset (Unggah / Bawaan)", "Input Manual Siswa", "Penjelasan Variabel"])
 
 
-# =====================================================================
 # HELPER
-# =====================================================================
 def _nav_to_eksplorasi(key: str):
     """Tombol navigasi ke halaman Eksplorasi Data."""
     st.markdown("---")
@@ -86,9 +84,7 @@ def _try_use_manual(df_manual: pd.DataFrame):
     st.rerun()
 
 
-# =====================================================================
 # TAB 1 — DATASET (UNGGAH / BAWAAN)
-# =====================================================================
 with t1:
     st.write(
         "Gunakan dataset bawaan atau unggah file CSV sendiri "
@@ -148,9 +144,7 @@ with t1:
     _nav_to_eksplorasi("nav_eksp_from_dataset")
 
 
-# =====================================================================
 # TAB 2 — INPUT MANUAL SISWA (EDITOR DATASET LATIH)
-# =====================================================================
 with t2:
     st.write(
         "Bangun **dataset latih** secara manual dengan menambahkan satu atau beberapa siswa. "
@@ -159,17 +153,13 @@ with t2:
         "Untuk prediksi siswa **baru** (inference), gunakan menu **Prediksi Siswa Baru**."
     )
 
-    # -----------------------------------------------------------------
     # Inisialisasi dataset manual di session_state
-    # -----------------------------------------------------------------
     if "manual_df" not in st.session_state:
         st.session_state["manual_df"] = pd.DataFrame(columns=FEATURES)
 
     manual_df = st.session_state["manual_df"]
 
-    # -----------------------------------------------------------------
     # Input massal via CSV (template + upload)
-    # -----------------------------------------------------------------
     st.markdown("### 📥 Input Massal via CSV")
     tpl = pd.DataFrame([{c: FEATURE_INFO[c][3] for c in FEATURES}])
     st.download_button(
@@ -201,9 +191,7 @@ with t2:
         except Exception as e:
             alert("danger", f"File tidak dapat dibaca: {e}")
 
-    # -----------------------------------------------------------------
     # Form tambah satu baris
-    # -----------------------------------------------------------------
     st.markdown("### ➕ Tambah Satu Siswa")
     with st.form("manual_add", clear_on_submit=True):
         vals = {}
@@ -235,9 +223,7 @@ with t2:
             st.toast(f"Baris ditambahkan (total {len(st.session_state['manual_df'])}).", icon="✅")
             st.rerun()
 
-    # -----------------------------------------------------------------
     # Tabel dataset manual + hapus baris
-    # -----------------------------------------------------------------
     manual_df = st.session_state["manual_df"]
     st.markdown(f"### 📋 Dataset Manual ({len(manual_df)} baris)")
 
@@ -383,9 +369,7 @@ with t2:
                 else:
                     _try_use_manual(manual_df)
 
-    # -----------------------------------------------------------------
     # Info: dataset latih aktif saat ini
-    # -----------------------------------------------------------------
     if st.session_state.get("df") is not None:
         st.markdown("---")
         st.caption(
@@ -396,9 +380,7 @@ with t2:
     _nav_to_eksplorasi("nav_eksp_from_manual")
 
 
-# =====================================================================
 # TAB 3 — PENJELASAN VARIABEL
-# =====================================================================
 with t3:
     rows = [
         {"Variabel": c, "Nama": v[0], "Rentang": f"{v[1]}–{v[2]}", "Penjelasan": v[4]}

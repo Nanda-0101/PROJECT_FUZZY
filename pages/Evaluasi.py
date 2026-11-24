@@ -1,9 +1,3 @@
-"""Merangkum empat komponen evaluasi model.
-1. KMO dan Bartlett sebelum ekstraksi PCA.
-2. Explained variance setelah ekstraksi PCA.
-3. Silhouette Score pada ruang PCA.
-4. Fuzzy Partition Coefficient dari derajat keanggotaan FCM.
-"""
 import numpy as np
 import pandas as pd
 import streamlit as st

@@ -1,4 +1,3 @@
-"""Logika komputasi Fuzzy C-Means + PCA (tanpa dependensi Streamlit)."""
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -30,7 +29,7 @@ FEATURE_INFO = {
 }
 
 
-# ----------------------------------------------------------------- data
+# data
 def read_dataset(file_or_path):
     """Baca CSV dengan deteksi separator & pembersihan format dobel-quote.
 
@@ -108,7 +107,7 @@ def validate_dataset(df):
     """Kembalikan (df_bersih, daftar_pesan[(level,teks)], ringkasan_dict)."""
     msgs = []
 
-    # ---- Cabang A: file tidak punya header yang benar ----
+    # Cabang A: file tidak punya header yang benar
     missing_cols = [c for c in FEATURES if c not in df.columns]
     if missing_cols:
         # Cek apakah masalahnya karena seluruh baris terbaca sebagai 1 kolom
@@ -136,7 +135,7 @@ def validate_dataset(df):
 
     d = df.copy()
 
-    # ---- Cabang B: konversi numerik per kolom, laporkan kolom mana yang gagal ----
+    # Cabang B: konversi numerik per kolom, laporkan kolom mana yang gagal
     gagal_konversi = {}
     for c in FEATURES:
         before = d[c].notna().sum()
@@ -155,7 +154,7 @@ def validate_dataset(df):
     bad_na = d[FEATURES].isna().any(axis=1)
     bad_rng = pd.Series(False, index=d.index)
 
-    # ---- Cabang C: laporkan per kolom mana yang menyumbang NaN ----
+    # Cabang C: laporkan per kolom mana yang menyumbang NaN
     if bad_na.sum():
         rinci_na = {}
         for c in FEATURES:
@@ -174,7 +173,7 @@ def validate_dataset(df):
                 f"{int(bad_na.sum())} baris memiliki nilai kosong/non-numerik pada fitur dan dibuang."
             ))
 
-    # ---- Cabang D: cek rentang valid per kolom ----
+    # Cabang D: cek rentang valid per kolom
     rinci_rng = {}
     for c in FEATURES:
         _, lo, hi, _, _ = FEATURE_INFO[c]
@@ -196,7 +195,7 @@ def validate_dataset(df):
     bad = bad_na | bad_rng
     clean = d.loc[~bad].reset_index(drop=True)
 
-    # ---- Cabang E: terlalu sedikit data ----
+    # Cabang E: terlalu sedikit data
     if len(clean) < 30:
         if len(clean) == 0:
             msgs.append((
@@ -212,7 +211,7 @@ def validate_dataset(df):
             ))
         return None, msgs, {}
 
-    # ---- Cabang F: fitur konstan ----
+    # Cabang F: fitur konstan
     zero_var = [c for c in FEATURES if clean[c].std() == 0]
     if zero_var:
         msgs.append((
@@ -220,7 +219,7 @@ def validate_dataset(df):
             f"Fitur tanpa variasi (konstan): {', '.join(zero_var)}."
         ))
 
-    # ---- Cabang G: sukses ----
+    # Cabang G: sukses
     if not bad.any():
         msgs.append((
             "success",
@@ -243,7 +242,7 @@ def validate_single(values):
     return errs
 
 
-# ----------------------------------------------------------------- FCM
+# FCM
 def _dist(X, V):
     d2 = (X ** 2).sum(1)[:, None] - 2 * X @ V.T + (V ** 2).sum(1)[None, :]
     return np.sqrt(np.maximum(d2, 1e-12))
@@ -293,7 +292,7 @@ def is_degenerate(U, tol=1e-3):
     return partition_coefficient(U) < 1.0 / U.shape[1] + tol
 
 
-# ----------------------------------------------------------------- penamaan cluster
+# penamaan cluster
 def _tier_names(k):
     if k == 2:
         return ["Berprestasi Tinggi", "Berprestasi Rendah (Berisiko)"]
@@ -372,7 +371,7 @@ def name_clusters(df_feat, labels, k):
     return out
 
 
-# ----------------------------------------------------------------- kelayakan PCA: KMO dan Bartlett (detail)
+# kelayakan PCA: KMO dan Bartlett (detail)
 def _corr(df):
     """Matriks korelasi Pearson antar fitur."""
     return np.corrcoef(df[FEATURES].astype(float).values, rowvar=False)
@@ -497,7 +496,7 @@ def pca_suitability(df):
     }
 
 
-# ----------------------------------------------------------------- pipeline
+# pipeline
 def run_pipeline(df, m=1.5, max_iter=500, tol=1e-5, n_init=5, var_thr=0.80,
                  k_min=2, k_max=8, k_mode="auto", k_manual=3, seed=42):
     X_raw = df[FEATURES].astype(float)
