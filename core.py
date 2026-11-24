@@ -32,42 +32,202 @@ FEATURE_INFO = {
 
 # ----------------------------------------------------------------- data
 def read_dataset(file_or_path):
-    """Baca CSV; separator (; atau ,) dideteksi otomatis."""
-    df = pd.read_csv(file_or_path, sep=None, engine="python")
-    df.columns = [str(c).strip().strip('"') for c in df.columns]
-    return df
+    """Baca CSV dengan deteksi separator & pembersihan format dobel-quote.
+
+    Mendukung:
+      - CSV standar (sep , atau ;)
+      - CSV dengan seluruh baris dibungkus kutip ganda  "GP;""F"";18;..."
+      - Campuran quote di dalam field
+    """
+    # 1. Baca mentah sebagai teks
+    if hasattr(file_or_path, "read"):
+        raw = file_or_path.read()
+        if isinstance(raw, bytes):
+            raw = raw.decode("utf-8-sig", errors="replace")
+    else:
+        with open(file_or_path, "r", encoding="utf-8-sig", errors="replace") as f:
+            raw = f.read()
+
+    # 2. Deteksi format "baris dikutip penuh": setiap baris diawali & diakhiri "
+    lines = raw.splitlines()
+    quoted_full = (
+        len(lines) > 1
+        and lines[0].startswith('"')
+        and lines[0].endswith('"')
+        and '""' in lines[0]
+    )
+    if quoted_full:
+        # Buang kutip pembuka & penutup setiap baris, lalu ubah "" -> "
+        cleaned = []
+        for ln in lines:
+            ln = ln.strip()
+            if ln.startswith('"') and ln.endswith('"') and len(ln) >= 2:
+                ln = ln[1:-1]
+            ln = ln.replace('""', '"')
+            cleaned.append(ln)
+        raw = "\n".join(cleaned)
+
+    # 3. Coba berbagai kombinasi (sep, quotechar, quoting) sampai ketemu
+    #    yang menghasilkan >= len(FEATURES) kolom & tidak semuanya NaN.
+    candidates = [
+        dict(sep=";", quotechar='"', quoting=0),   # standar CSV ; dengan quote
+        dict(sep=";", quotechar='"', quoting=3),   # abaikan quote sama sekali
+        dict(sep=",", quotechar='"', quoting=0),   # standar CSV ,
+        dict(sep=",", quotechar='"', quoting=3),
+        dict(sep=None, engine="python"),           # auto-detect
+    ]
+    from io import StringIO
+    last_err = None
+    for kw in candidates:
+        try:
+            df = pd.read_csv(StringIO(raw), **kw)
+            df.columns = [str(c).strip().strip('"') for c in df.columns]
+            # validasi: harus punya kolom fitur, dan kolom numerik utama tidak semua NaN
+            if any(c in df.columns for c in FEATURES):
+                # cek apakah kolom numerik inti benar-benar terbaca
+                sample = [c for c in ("age", "Medu", "G1", "G2", "G3") if c in df.columns]
+                if sample:
+                    conv = pd.to_numeric(df[sample[0]], errors="coerce")
+                    if conv.notna().sum() > 0:
+                        return df
+            # kalau tidak ada kolom fitur sama sekali, tetap return (biar validate_dataset yang komplain)
+            if len(df.columns) >= len(FEATURES):
+                return df
+        except Exception as e:
+            last_err = e
+            continue
+
+    # fallback: kalau semua gagal, raise error informatif
+    raise ValueError(
+        f"Tidak dapat membaca CSV. Format file tidak dikenali. "
+        f"Pesan terakhir: {last_err}"
+    )
 
 
 def validate_dataset(df):
     """Kembalikan (df_bersih, daftar_pesan[(level,teks)], ringkasan_dict)."""
     msgs = []
+
+    # ---- Cabang A: file tidak punya header yang benar ----
     missing_cols = [c for c in FEATURES if c not in df.columns]
     if missing_cols:
-        msgs.append(("error", f"Kolom wajib tidak ditemukan: {', '.join(missing_cols)}."))
+        # Cek apakah masalahnya karena seluruh baris terbaca sebagai 1 kolom
+        if len(df.columns) == 1:
+            msgs.append((
+                "error",
+                "File CSV hanya terbaca sebagai 1 kolom. Kemungkinan format "
+                "baris dikutip penuh (\"...\") atau separator tidak dikenali. "
+                "Periksa file dengan pembaca CSV standar (Excel/LibreOffice) "
+                "lalu simpan ulang sebagai CSV (;)."
+            ))
+        elif len(df.columns) < len(FEATURES):
+            msgs.append((
+                "error",
+                f"Kolom wajib tidak ditemukan: {', '.join(missing_cols)}. "
+                f"Kolom terbaca hanya {len(df.columns)} dari minimal {len(FEATURES)}."
+            ))
+        else:
+            msgs.append((
+                "error",
+                f"Kolom wajib tidak ditemukan: {', '.join(missing_cols)}. "
+                f"Kolom terbaca: {', '.join(map(str, df.columns[:10]))}..."
+            ))
         return None, msgs, {}
+
     d = df.copy()
+
+    # ---- Cabang B: konversi numerik per kolom, laporkan kolom mana yang gagal ----
+    gagal_konversi = {}
     for c in FEATURES:
+        before = d[c].notna().sum()
         d[c] = pd.to_numeric(d[c], errors="coerce")
+        after = d[c].notna().sum()
+        if after < before:
+            gagal_konversi[c] = before - after
+    if gagal_konversi:
+        rinci = ", ".join(f"{c} ({n})" for c, n in gagal_konversi.items())
+        msgs.append((
+            "warning",
+            f"Beberapa kolom berisi nilai non-numerik dan diubah menjadi kosong: {rinci}."
+        ))
+
     n0 = len(d)
     bad_na = d[FEATURES].isna().any(axis=1)
     bad_rng = pd.Series(False, index=d.index)
+
+    # ---- Cabang C: laporkan per kolom mana yang menyumbang NaN ----
+    if bad_na.sum():
+        rinci_na = {}
+        for c in FEATURES:
+            n_na = int(d[c].isna().sum())
+            if n_na:
+                rinci_na[c] = n_na
+        if rinci_na:
+            detail = ", ".join(f"{c}: {n}" for c, n in rinci_na.items())
+            msgs.append((
+                "warning",
+                f"{int(bad_na.sum())} baris memiliki nilai kosong/non-numerik pada fitur: {detail}."
+            ))
+        else:
+            msgs.append((
+                "warning",
+                f"{int(bad_na.sum())} baris memiliki nilai kosong/non-numerik pada fitur dan dibuang."
+            ))
+
+    # ---- Cabang D: cek rentang valid per kolom ----
+    rinci_rng = {}
     for c in FEATURES:
         _, lo, hi, _, _ = FEATURE_INFO[c]
-        bad_rng |= (d[c] < lo) | (d[c] > hi)
+        mask = (d[c] < lo) | (d[c] > hi)
+        n_bad = int(mask.sum())
+        if n_bad:
+            rinci_rng[c] = (n_bad, float(d.loc[mask, c].min()), float(d.loc[mask, c].max()))
+        bad_rng |= mask
+    if rinci_rng:
+        detail = "; ".join(
+            f"{c}: {n} baris (rentang ditemukan {mn:.1f}-{mx:.1f})"
+            for c, (n, mn, mx) in rinci_rng.items()
+        )
+        msgs.append((
+            "warning",
+            f"{int((bad_rng & ~bad_na).sum())} baris memiliki nilai di luar rentang valid: {detail}."
+        ))
+
     bad = bad_na | bad_rng
-    if bad_na.sum():
-        msgs.append(("warning", f"{int(bad_na.sum())} baris memiliki nilai kosong/non-numerik pada fitur dan dibuang."))
-    if (bad_rng & ~bad_na).sum():
-        msgs.append(("warning", f"{int((bad_rng & ~bad_na).sum())} baris memiliki nilai di luar rentang valid dan dibuang."))
     clean = d.loc[~bad].reset_index(drop=True)
+
+    # ---- Cabang E: terlalu sedikit data ----
     if len(clean) < 30:
-        msgs.append(("error", f"Data valid hanya {len(clean)} baris; minimal 30 baris dibutuhkan."))
+        if len(clean) == 0:
+            msgs.append((
+                "error",
+                f"Data valid 0 baris dari {n0} baris awal. Penyebab paling umum: "
+                f"parser CSV salah membaca (lihat pesan di atas), atau seluruh "
+                f"nilai berada di luar rentang valid."
+            ))
+        else:
+            msgs.append((
+                "error",
+                f"Data valid hanya {len(clean)} baris; minimal 30 baris dibutuhkan."
+            ))
         return None, msgs, {}
+
+    # ---- Cabang F: fitur konstan ----
     zero_var = [c for c in FEATURES if clean[c].std() == 0]
     if zero_var:
-        msgs.append(("warning", f"Fitur tanpa variasi (konstan): {', '.join(zero_var)}."))
+        msgs.append((
+            "warning",
+            f"Fitur tanpa variasi (konstan): {', '.join(zero_var)}."
+        ))
+
+    # ---- Cabang G: sukses ----
     if not bad.any():
-        msgs.append(("success", "Seluruh baris lolos validasi (kolom lengkap, numerik, dan dalam rentang)."))
+        msgs.append((
+            "success",
+            f"Seluruh {len(clean)} baris lolos validasi "
+            f"(kolom lengkap, numerik, dan dalam rentang)."
+        ))
+
     info = {"baris_awal": n0, "baris_valid": len(clean), "fitur": len(FEATURES)}
     return clean, msgs, info
 
